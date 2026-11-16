@@ -863,8 +863,8 @@ kubectl wait --for=condition=Ready pod/pod-with-init-container -n security-lab -
   echo -e "\n=== KYVERNO RELEASE & POLICIES ==="
   helm list -n kyverno
   kubectl get pods -n kyverno
-  kubectl get clusterpolicies
-  kubectl describe clusterpolicy require-app-label require-cpu-memory-resources
+  kubectl get validatingpolicies
+  kubectl describe validatingpolicy require-app-label require-cpu-memory-resources
 } > evidence/lab-verification-report.txt
 
 cat evidence/lab-verification-report.txt
