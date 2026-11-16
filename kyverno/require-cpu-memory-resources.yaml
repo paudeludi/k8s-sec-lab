@@ -1,0 +1,51 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-cpu-memory-resources
+spec:
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+
+  validationActions:
+    - Deny
+
+  validations:
+    - expression: >-
+        object.metadata.namespace in [
+          'kube-system',
+          'kyverno',
+          'kube-public',
+          'kube-node-lease'
+        ] ||
+        (
+          (
+            object.spec.containers +
+            object.spec.?initContainers.orValue([])
+          ).all(container,
+            has(container.resources) &&
+            has(container.resources.requests) &&
+            'cpu' in container.resources.requests &&
+            'memory' in container.resources.requests &&
+            has(container.resources.limits) &&
+            'cpu' in container.resources.limits &&
+            'memory' in container.resources.limits
+          )
+        )
+      message: >-
+        Every container and initContainer must define CPU and memory
+        requests and limits.

@@ -1,0 +1,76 @@
+]633;E;echo "=== NODES & CNI ===";792d9715-6ede-4938-ba43-126f7ee946d5]633;C=== NODES & CNI ===
+NAME              STATUS   ROLES           AGE   VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION             CONTAINER-RUNTIME
+k8s-sec-lab       Ready    control-plane   11h   v1.37.0   192.168.58.2   <none>        Debian GNU/Linux 12 (bookworm)   7.0.0-43-generic (amd64)   containerd://2.3.4
+k8s-sec-lab-m02   Ready    <none>          11h   v1.37.0   192.168.58.3   <none>        Debian GNU/Linux 12 (bookworm)   7.0.0-43-generic (amd64)   containerd://2.3.4
+calico-kube-controllers-db57f7644-2vjxs   1/1     Running   1 (55m ago)   11h
+calico-node-qtvkv                         1/1     Running   1 (54m ago)   11h
+calico-node-v4vhg                         1/1     Running   1 (55m ago)   11h
+coredns-559f6c778d-kw2ss                  1/1     Running   1 (55m ago)   11h
+
+=== WORKLOADS, SERVICES & ENDPOINTS ===
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS          IMAGES                                     SELECTOR       LABELS
+deployment.apps/backend    1/1     1            1           42m   backend             nginx:1.27-alpine                          app=backend    <none>
+deployment.apps/frontend   1/1     1            1           43m   frontend-web,curl   nginx:1.27-alpine,curlimages/curl:8.12.1   app=frontend   <none>
+
+NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE   SELECTOR            LABELS
+service/backend-service         ClusterIP   10.110.184.134   <none>        80/TCP    42m   app=backend         <none>
+service/egress-target-service   ClusterIP   10.100.78.151    <none>        80/TCP    27m   app=egress-target   <none>
+service/frontend-service        ClusterIP   10.107.131.207   <none>        80/TCP    43m   app=frontend        <none>
+
+NAME                                                         ADDRESSTYPE   PORTS   ENDPOINTS        AGE   LABELS
+endpointslice.discovery.k8s.io/backend-service-nzn25         IPv4          80      10.244.160.130   42m   endpointslice.kubernetes.io/managed-by=endpointslice-controller.k8s.io,kubernetes.io/service-name=backend-service
+endpointslice.discovery.k8s.io/egress-target-service-dhpbz   IPv4          80      10.244.160.132   27m   endpointslice.kubernetes.io/managed-by=endpointslice-controller.k8s.io,kubernetes.io/service-name=egress-target-service
+endpointslice.discovery.k8s.io/frontend-service-zsqrl        IPv4          80      10.244.160.129   43m   endpointslice.kubernetes.io/managed-by=endpointslice-controller.k8s.io,kubernetes.io/service-name=frontend-service
+
+NAME                            READY   STATUS    RESTARTS   AGE     IP               NODE              NOMINATED NODE   READINESS GATES   LABELS
+pod/backend-7849d58886-rhjfx    1/1     Running   0          42m     10.244.160.130   k8s-sec-lab-m02   <none>           <none>            app=backend,pod-template-hash=7849d58886
+pod/egress-target               1/1     Running   0          27m     10.244.160.132   k8s-sec-lab-m02   <none>           <none>            app=egress-target
+pod/frontend-7bf958d785-4657q   2/2     Running   0          43m     10.244.160.129   k8s-sec-lab-m02   <none>           <none>            app=frontend,pod-template-hash=7bf958d785
+pod/pod-compliant               1/1     Running   0          6m20s   10.244.160.138   k8s-sec-lab-m02   <none>           <none>            app=policy-test
+pod/pod-with-init-container     1/1     Running   0          4m15s   10.244.160.139   k8s-sec-lab-m02   <none>           <none>            app=policy-test
+pod/unauthorized-client         1/1     Running   0          27m     10.244.160.131   k8s-sec-lab-m02   <none>           <none>            app=unauthorized-client
+
+=== NETWORK POLICIES ===
+Name:         backend-allow-frontend-ingress
+Namespace:    security-lab
+Created on:   2026-11-15 23:48:30 +0000 GMT
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     app=backend
+  Allowing ingress traffic:
+    To Port: 80/TCP
+    From:
+      PodSelector: app=frontend
+  Not affecting egress traffic
+  Policy Types: Ingress
+
+
+Name:         frontend-restrict-egress
+Namespace:    security-lab
+Created on:   2026-11-15 23:51:21 +0000 GMT
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     app=frontend
+  Not affecting ingress traffic
+  Allowing egress traffic:
+    To Port: 80/TCP
+    To:
+      PodSelector: app=backend
+    ----------
+    To Port: 53/UDP
+    To Port: 53/TCP
+    To:
+      NamespaceSelector: kubernetes.io/metadata.name=kube-system
+      PodSelector: k8s-app=kube-dns
+  Policy Types: Egress
+
+=== KYVERNO RELEASE & POLICIES ===
+NAME   	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART         	APP VERSION
+kyverno	kyverno  	1       	2026-11-15 23:55:36.589028736 +0000 UTC	deployed	kyverno-3.10.0	v1.20.0    
+NAME                                            READY   STATUS    RESTARTS   AGE
+kyverno-admission-controller-b5f755d76-ld6ql    1/1     Running   0          17m
+kyverno-background-controller-fbf6dc4b9-4rhw9   1/1     Running   0          17m
+kyverno-cleanup-controller-c9cc448b4-svn84      1/1     Running   0          17m
+kyverno-reports-controller-758c89b484-xvmjp     1/1     Running   0          17m

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-missing-resources
+  namespace: security-lab
+  labels:
+    app: policy-test
+spec:
+  containers:
+    - name: test
+      image: nginx:1.27-alpine
